@@ -33,7 +33,8 @@ READY_MARK="${BENCH_DIR}/sites/.hrms-ready"
 wait_for_mariadb() {
   echo "Waiting for MariaDB at ${DB_HOST}:3306..."
   for _ in $(seq 1 90); do
-    if mysqladmin ping -h "${DB_HOST}" -uroot -p"${DB_ROOT_PASSWORD}" --silent --connect-timeout=2; then
+    # Client 11 requires TLS; MariaDB 10.8 in this stack does not serve it.
+    if mysqladmin --skip-ssl ping -h "${DB_HOST}" -uroot -p"${DB_ROOT_PASSWORD}" --silent --connect-timeout=2; then
       echo "MariaDB is ready."
       return 0
     fi
