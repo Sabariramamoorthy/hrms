@@ -1,10 +1,15 @@
 # Multi-stage build for Frappe HRMS
 FROM frappe/bench:latest as builder
 
+USER root
+
 WORKDIR /home/frappe
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Fix apt-get permission issue and install dependencies
+RUN rm -rf /var/lib/apt/lists/* && \
+    apt-get clean && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
     curl \
     git \
     ca-certificates \
@@ -25,10 +30,15 @@ RUN cd /workspace && \
 # Production stage
 FROM frappe/bench:latest
 
+USER root
+
 WORKDIR /home/frappe
 
-# Install runtime dependencies including curl for health checks
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Fix apt-get permission issue and install runtime dependencies including curl for health checks
+RUN rm -rf /var/lib/apt/lists/* && \
+    apt-get clean && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
