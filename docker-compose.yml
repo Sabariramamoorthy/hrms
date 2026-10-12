@@ -24,7 +24,6 @@ services:
       - "${APP_PORT:-8000}:8000"
     volumes:
       - frappe-data:/home/frappe/frappe-bench/sites
-      - ./frappe-start.sh:/workspace/frappe-start.sh:ro
     depends_on:
       db:
         condition: service_healthy

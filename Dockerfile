@@ -47,6 +47,10 @@ RUN rm -rf /var/lib/apt/lists/* && \
 COPY --from=builder /workspace /workspace
 COPY --from=builder /home/frappe /home/frappe
 
+# Copy and make entrypoint script executable
+COPY frappe-start.sh /workspace/frappe-start.sh
+RUN chmod +x /workspace/frappe-start.sh
+
 # Expose port
 EXPOSE 8000 9000
 
