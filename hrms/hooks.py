@@ -337,9 +337,18 @@ global_search_doctypes = {
 	],
 }
 
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "hrms.event.get_events"
-# }
+override_whitelisted_methods = {
+	"frappe.desk.doctype.event.event.get_events": "hrms.event.get_events"
+}
+
+# Health check for Openship/container orchestration
+# Required for proper health monitoring in containerized deployments
+api_methods = {
+	"hrms.api.health_check": {
+		"methods": ["GET"],
+		"require_login": False,
+	}
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

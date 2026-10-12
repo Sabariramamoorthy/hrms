@@ -1,0 +1,37 @@
+{
+  "name": "Frappe HRMS",
+  "composePath": "docker-compose.yml",
+  "port": 8000,
+  "runtime": "docker",
+  "startCommand": "docker-compose up -d",
+  "installCommand": "bash frappe-install.sh",
+  "buildCommand": "docker-compose build",
+  "services": {
+    "frappe-hrms": {
+      "port": 8000,
+      "healthRoute": "/api/health",
+      "volumes": [
+        "frappe-data:/home/frappe/frappe-bench/sites"
+      ]
+    },
+    "db": {
+      "port": 3306,
+      "internal": true,
+      "volumes": [
+        "db-data:/var/lib/mysql"
+      ]
+    },
+    "redis": {
+      "port": 6379,
+      "internal": true,
+      "volumes": [
+        "redis-data:/data"
+      ]
+    }
+  },
+  "volumes": [
+    "frappe-data",
+    "db-data",
+    "redis-data"
+  ]
+}

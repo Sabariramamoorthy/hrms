@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.gitmodules
+.git-blame-ignore-revs
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules
+__pycache__
+*.pyc
+.pytest_cache
+venv
+env
+
+# Development
+.vscode
+.idea
+.DS_Store
+*.swp
+*.swo
+*~
+.editorconfig
+
+# Test coverage
+htmlcov
+.coverage
+coverage.xml
+
+# Build artifacts
+dist
+build
+*.egg-info
+.tox
+.nox
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.circleci
+
+# Documentation
+docs
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# Keep: patches (needed at runtime for patch-package)
+!patches/**
+# Keep: frontend build assets needed at runtime
+!frontend/build/**
+!roster/build/**

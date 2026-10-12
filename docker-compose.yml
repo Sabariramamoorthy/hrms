@@ -1,0 +1,92 @@
+version: "3.8"
+
+services:
+  frappe-hrms:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: bash frappe-start.sh
+    container_name: frappe-hrms
+    environment:
+      - HOST=0.0.0.0
+      - PORT=${APP_PORT:-8000}
+      - SHELL=/bin/bash
+      - MYSQL_ROOT_PASSWORD=${MARIADB_PASSWORD:-root123}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-frappe123}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - FRAPPE_DB_HOST=db
+      - FRAPPE_DB_NAME=frappe
+      - FRAPPE_DB_USER=frappe
+      - FRAPPE_DB_PASSWORD=${MYSQL_PASSWORD:-frappe123}
+      - SITE_NAME=${SITE_NAME:-hrms.localhost}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - frappe-data:/home/frappe/frappe-bench/sites
+      - ./frappe-start.sh:/workspace/frappe-start.sh:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - frappe-network
+    restart: unless-stopped
+
+  db:
+    image: mariadb:10.8
+    container_name: frappe-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MARIADB_PASSWORD:-root123}
+      - MYSQL_DATABASE=frappe
+      - MYSQL_USER=frappe
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-frappe123}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MARIADB_PASSWORD:-root123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - frappe-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: frappe-redis
+    command: redis-server --appendonly yes --appendfsync everysec
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - frappe-network
+    restart: unless-stopped
+
+volumes:
+  frappe-data:
+    driver: local
+  db-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  frappe-network:
+    driver: bridge
