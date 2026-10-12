@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: bash frappe-start.sh
+    command: bash /home/frappe/frappe-start.sh
     container_name: frappe-hrms
     environment:
       - HOST=0.0.0.0
@@ -20,21 +20,22 @@ services:
       - FRAPPE_DB_USER=frappe
       - FRAPPE_DB_PASSWORD=${MYSQL_PASSWORD:-frappe123}
       - SITE_NAME=${SITE_NAME:-hrms.localhost}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin@123}
     ports:
       - "${APP_PORT:-8000}:8000"
     volumes:
-      - frappe-data:/home/frappe/frappe-bench/sites
+      - frappe-data:/home/frappe/frappe-bench
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/method/ping"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 60s
+      retries: 10
+      start_period: 3600s
     networks:
       - frappe-network
     restart: unless-stopped

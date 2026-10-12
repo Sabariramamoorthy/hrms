@@ -47,19 +47,18 @@ RUN rm -rf /var/lib/apt/lists/* && \
 COPY --from=builder /workspace /workspace
 COPY --from=builder /home/frappe /home/frappe
 
-# Copy and make entrypoint script executable
-COPY frappe-start.sh /workspace/frappe-start.sh
-RUN chmod +x /workspace/frappe-start.sh
+# Keep the entrypoint outside the bench volume mount.
+COPY frappe-start.sh /home/frappe/frappe-start.sh
+RUN chmod 755 /home/frappe/frappe-start.sh \
+    && chown frappe:frappe /home/frappe/frappe-start.sh
 
 # Expose port
 EXPOSE 8000 9000
 
-# Health check endpoint
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=60s \
-    CMD curl -f http://localhost:8000/api/health || exit 1
+# Frappe answers /api/method/ping. First boot installs ERPNext, so allow a long start.
+HEALTHCHECK --interval=30s --timeout=10s --retries=10 --start-period=3600s \
+    CMD curl -fsS http://127.0.0.1:8000/api/method/ping || exit 1
 
-# Set the shell
 ENV SHELL=/bin/bash
 
-# Start command will be provided by docker-compose
-CMD ["/bin/bash"]
+CMD ["bash", "/home/frappe/frappe-start.sh"]
