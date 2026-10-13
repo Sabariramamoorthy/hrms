@@ -24,6 +24,8 @@ printf '[client]\nskip-ssl\n' > "${HOME}/.my.cnf"
 
 BENCH_DIR=/home/frappe/frappe-bench
 SITE_NAME="${SITE_NAME:-${FRAPPE_SITE:-frappe-hrms.app.cloudshiftsolutions.in}}"
+# bench_helper serves FRAPPE_SITE when set, so it must name the real site.
+export FRAPPE_SITE="${SITE_NAME}"
 DB_HOST="${FRAPPE_DB_HOST:-db}"
 REDIS_HOST="${REDIS_HOST:-redis}"
 REDIS_PORT="${REDIS_PORT:-6379}"
