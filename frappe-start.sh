@@ -17,11 +17,13 @@ export PYENV_ROOT="${PYENV_ROOT:-/home/frappe/.pyenv}"
 export NVM_DIR=/home/frappe/.nvm
 export PATH="${PYENV_ROOT}/shims:${PYENV_ROOT}/bin:/home/frappe/.local/bin:${NVM_DIR}/current/bin:${PATH}"
 export BENCH_DEVELOPER=1
+# Client 11 requires TLS; MariaDB 10.8 in this stack does not serve it.
+printf '[client]\nskip-ssl\n' > "${HOME}/.my.cnf"
 # shellcheck disable=SC1091
 [ -s "${NVM_DIR}/nvm.sh" ] && . "${NVM_DIR}/nvm.sh"
 
 BENCH_DIR=/home/frappe/frappe-bench
-SITE_NAME="${SITE_NAME:-${FRAPPE_SITE:-hrms.localhost}}"
+SITE_NAME="${SITE_NAME:-${FRAPPE_SITE:-frappe-hrms.app.cloudshiftsolutions.in}}"
 DB_HOST="${FRAPPE_DB_HOST:-db}"
 REDIS_HOST="${REDIS_HOST:-redis}"
 REDIS_PORT="${REDIS_PORT:-6379}"
@@ -33,7 +35,6 @@ READY_MARK="${BENCH_DIR}/sites/.hrms-ready"
 wait_for_mariadb() {
   echo "Waiting for MariaDB at ${DB_HOST}:3306..."
   for _ in $(seq 1 90); do
-    # Client 11 requires TLS; MariaDB 10.8 in this stack does not serve it.
     if mysqladmin --skip-ssl ping -h "${DB_HOST}" -uroot -p"${DB_ROOT_PASSWORD}" --silent --connect-timeout=2; then
       echo "MariaDB is ready."
       return 0
@@ -58,20 +59,21 @@ wait_for_redis() {
 }
 
 ensure_bench() {
-  if [ -x "${BENCH_DIR}/env/bin/python" ]; then
+  if "${BENCH_DIR}/env/bin/python" -c "import frappe" >/dev/null 2>&1; then
     echo "Frappe bench already initialized."
     return 0
   fi
 
-  echo "Initializing Frappe bench from the develop branch. First boot takes a long time."
-  rm -rf /tmp/frappe-bench-init
-  bench init --skip-redis-config-generation --frappe-branch develop /tmp/frappe-bench-init
-  mkdir -p "${BENCH_DIR}/sites"
-  tar -C /tmp/frappe-bench-init --exclude=sites -cf - . | tar -C "${BENCH_DIR}" -xf -
-  if [ ! -f "${BENCH_DIR}/sites/apps.txt" ]; then
-    cp -a /tmp/frappe-bench-init/sites/. "${BENCH_DIR}/sites/"
+  if [ -f "${READY_MARK}" ]; then
+    echo "Bench environment cannot import frappe but site ${SITE_NAME} exists; refusing to wipe it." >&2
+    exit 1
   fi
-  rm -rf /tmp/frappe-bench-init
+
+  # The virtualenv records absolute paths, so the bench must be built where it runs.
+  echo "Initializing Frappe bench from the develop branch. First boot takes a long time."
+  find "${BENCH_DIR}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+  cd /home/frappe
+  bench init --ignore-exist --skip-redis-config-generation --frappe-branch develop "${BENCH_DIR}"
 }
 
 configure_bench() {
@@ -140,6 +142,7 @@ ensure_site() {
     --set-default
 
   bench --site "${SITE_NAME}" set-config developer_mode 0
+  bench --site "${SITE_NAME}" set-config host_name "https://${SITE_NAME}"
   bench --site "${SITE_NAME}" enable-scheduler
   bench --site "${SITE_NAME}" clear-cache
   touch "${READY_MARK}"

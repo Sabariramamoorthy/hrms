@@ -19,7 +19,7 @@ services:
       - FRAPPE_DB_NAME=frappe
       - FRAPPE_DB_USER=frappe
       - FRAPPE_DB_PASSWORD=${MYSQL_PASSWORD:-frappe123}
-      - SITE_NAME=${SITE_NAME:-hrms.localhost}
+      - SITE_NAME=${SITE_NAME:-frappe-hrms.app.cloudshiftsolutions.in}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin@123}
     ports:
       - "${APP_PORT:-8000}:8000"
